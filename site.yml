@@ -1,0 +1,10 @@
+- import_playbook: gce.yml vm_name=jenkins num_instances=1 instance_tag=jenkins
+
+- import_playbook: gce.yml vm_name=mysql-sonar num_instances=1 instance_tag=mysql-sonar
+
+- import_playbook: gce.yml vm_name=sonar num_instances=1 instance_tag=sonar
+
+- import_playbook: gce.yml vm_name=nexus num_instances=1 instance_tag=nexus
+
+- import_playbook: deploy-ci-cd-platform.yml
+

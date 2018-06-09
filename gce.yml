@@ -1,0 +1,39 @@
+- name: Create Instance(s)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+  - name: Provisioning {{ num_instances }} instances with basename {{ vm_name }}
+    gce:
+      name: "{{ vm_name }}"
+      num_instances: "{{ num_instances }}"
+      machine_type: "{{ profile }}"
+      image: "{{ image }}"
+      service_account_email: "{{ service_account_email }}"
+      credentials_file: "{{ credentials_file }}"
+      project_id: "{{ project_id }}"
+      zone: "{{ availability_zone }}"
+      state: "{{ state }}"
+      tags: "{{ instance_tag }}"
+    register: gce
+
+  - name: Wait for SSH to come up
+    wait_for:
+      host: "{{ item.public_ip }}"
+      port: 22
+      delay: 10
+      timeout: 600
+    with_items: "{{ gce.instance_data }}"
+
+  - name: Add host to groupname 
+    add_host: 
+      hostname: "{{ item.public_ip }}"
+      groupname: "{{ instance_tag }}"
+    with_items: "{{ gce.instance_data }}"
+    changed_when: false 
+             
+- name: Manage new instances
+  hosts: "{{ instance_tag }}"
+  roles:
+    - role: role-ntp

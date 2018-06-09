@@ -1,0 +1,8 @@
+service_account_email: 181158672887-compute@developer.gserviceaccount.com
+credentials_file: /home/niclettel/playbooks/credential.json
+project_id: fluted-box-182215
+profile: n1-standard-1
+image: centos-7
+availability_zone: us-central1-c
+state: present
+instance_tag: "none"
