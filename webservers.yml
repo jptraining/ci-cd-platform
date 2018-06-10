@@ -1,0 +1,5 @@
+---
+- name: This play will install spring-bot webapp
+  hosts: webservers
+  roles:
+    - role: role-deploy-spring-boot-app

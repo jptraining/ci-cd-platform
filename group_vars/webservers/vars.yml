@@ -1,0 +1,4 @@
+nexus_server: http://nexus:8081/repository 
+artefact_groupe_id: com.spring-boot.examples
+artefact_id: hello-world
+artefact_extension: jar

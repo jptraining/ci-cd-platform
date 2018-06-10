@@ -1,59 +1,79 @@
 ---
+- name: This play will install common tools
+  hosts: jenkins:sonar
+  tasks:
+    - name: Ensure git is installed
+      yum:
+        name: git
+        state: present
+
 - name: This PLAY will install Jenkins
   hosts: jenkins
   tags: jenkins
-
-  roles:
-    - role: role-java
-      java_packages:
-        - java-1.8.0-openjdk
-    
-    - role: role-jenkins
-      jenkins_package_state: "latest"
-      jenkins_plugins_state: "latest"
-
-- name: This PLAY will install MariaDb
-  hosts: mysql-sonar
-  tags: mysql-sonar
-
-  roles:
-    - role-mysql
-
-- name: This PLAY will install SonarQube
-  hosts: sonar
-  tags: sonar
   pre_tasks:
-    - name: Install unzip
+    - name: Ensure maven is installed
       yum:
-        name: unzip
+        name: maven
         state: present
   roles:
     - role: role-java
       java_packages:
         - java-1.8.0-openjdk
+    - role: role-jenkins
+      jenkins_package_state: "latest"
+      jenkins_plugins_state: "latest"
+      jenkins_plugins:
+        - blueocean
+        - ghprb
+        - greenballs
+        - workflow-aggregator        
+- name: This PLAY will install SonarQube
+  hosts: sonar
+  tags: sonar
+  pre_tasks:
+    - name: Install the MySQL repo.
+      yum:
+        name: http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+        state: present
+      when: ansible_os_family == "RedHat"  
+    - name: Override variables for MySQL (RedHat).
+      set_fact:
+        mysql_daemon: mysqld
+        mysql_packages: ['mysql-server']
+        mysql_log_error: /var/log/mysqld.err
+        mysql_syslog_tag: mysqld
+        mysql_pid_file: /var/run/mysqld/mysqld.pid
+        mysql_socket: /var/lib/mysql/mysql.sock
+        java_packages:
+          - java-1.8.0-openjdk        
+      when: ansible_os_family == "RedHat"
+    - name: Install unzip
+      yum:
+        name: unzip
+        state: present
+  roles:
     - role: role-sonar
-      sonar_mysql_host: "{{ groups['mysql-sonar'][0] }}"
-      sonar_version: 5.6.1
-      sonar_download_validate_certs: no
-      sonar_mysql_allowed_hosts:
-        - "127.0.0.1"
-        - "::1"
-        - "localhost"
-        - "0.0.0.0"
+      sonar_jdbc_driver: "h2" # postgres, h2 or mysql
+      sonar_jdbc_host: "127.0.0.1"
+      sonar_jdbc_port: 9092 # h2 default is 9092 postgresql 5432 and mysql is 3306
+      sonar_jdbc_user: "sonar"
+      sonar_jdbc_pass: "rN88HJkB"
+      sonar_jdbc_db: sonar
+      sonar_version: "3.7.4"
+      sonar_url: "https://sonarsource.bintray.com/Distribution/sonarqube/sonar-{{ sonar_version }}.zip"
+      sonar_java_plugin_version: "3.4"
+      sonar_plugins:
+        - url: "http://sonarsource.bintray.com/Distribution/sonar-java-plugin/sonar-java-plugin-{{ sonar_java_plugin_version }}.jar"
 
 - name: This Play Will Install Nexus
   hosts: nexus
   tags: nexus
   become: yes
-
   vars:
     nexus_version: '3.1.0-04'
-    nexus_timezone: 'Canada/Eastern'
-    nexus_admin_password: "{{ vault_nexus_admin_password }}"
+    nexus_timezone: 'Europe/Paris'
+    nexus_admin_password: admin123
     httpd_server_name: 'nexus.vm'
-    httpd_setup_enable: true
-    httpd_ssl_certificate_file: "{{ vault_httpd_ssl_certificate_file }}"
-    httpd_ssl_certificate_key_file: "{{ vault_httpd_ssl_certificate_key_file }}"
     ldap_connections:
       - ldap_name: 'Company LDAP'
         ldap_protocol: 'ldaps'
@@ -116,7 +136,6 @@
       - name: alfresco
         remote_url: 'https://artifacts.alfresco.com/nexus/content/groups/private/'
         remote_username: 'secret-username'
-        remote_password: "{{ vault_alfresco_private_password }}"
       - name: jboss
         remote_url: 'https://repository.jboss.org/nexus/content/groups/public-jboss/'
       - name: vaadin-addons
@@ -136,9 +155,34 @@
           - jboss
           - vaadin-addons
           - jaspersoft
-
   roles:
     - role: role-java
       java_packages:
         - java-1.8.0-openjdk
     - role: role-nexus
+
+- name: This Play Will Install Promotheus
+  hosts: prometheus
+  tags: prometheus
+  become: True
+  roles:
+    - role-prometheus
+  vars:
+    prometheus_components:
+      - prometheus
+      - node_exporter
+      - alertmanager  
+
+- name: This Play Will InstallGrafana
+  hosts: grafana
+  tags: grafana
+  become: True
+  roles:
+    - role-grafana   
+
+- name: This Play Will Install ELK stack
+  hosts: elk
+  tags: elk
+  become: True
+  roles:
+    - role-elk 

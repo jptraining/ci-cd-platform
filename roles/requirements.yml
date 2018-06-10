@@ -1,3 +1,15 @@
+- name: role-elk
+  src: https://github.com/jpfork/ansible-elk.git
+  version: master
+- name: role-grafana
+  src: https://github.com/jpfork/Stouts.grafana.git
+  version: master
+- name: role-deploy-spring-boot-app
+  src: https://github.com/jpfork/ansible-role-spring-boot-app.git
+  version: master
+- name: role-prometheus
+  src: https://github.com/jpfork/ansible-prometheus.git
+  version: master
 - name: role-ntp
   src: https://github.com/jpfork/ansible-role-ntp.git
   version: master
@@ -8,7 +20,7 @@
   src: https://github.com/jpfork/ansible-role-java.git
   version: master
 - name: role-sonar
-  src: https://github.com/jpfork/ansible-role-sonar.git
+  src: https://github.com/jpfork/ansible-sonar.git
   version: master
 - name: role-jenkins
   src: https://github.com/jpfork/ansible-role-jenkins.git
